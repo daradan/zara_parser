@@ -80,8 +80,6 @@ class ZaraWomanParser:
         url = f"https://www.zara.com/kz/ru/{keyword}-p{seo_product_id}.html?v1={discern_product_id}&v2={self.v2}"
         self.data['url_non_utf8'] = url
         self.data['url'] = requests.utils.unquote(url)
-        # return url
-        # return requests.utils.unquote(url)
 
     def make_photo_urls(self, photos):
         photos_list = []
@@ -100,7 +98,6 @@ class ZaraWomanParser:
             self.data['product_id'] = last_inserted_row[0]
             working_with_db.insert_data_to_db_prices(**self.data)
         else:
-            # finded_product = [item for item in working_with_db.check_product('all', **self.data) if self.data['url'] == item]
             finded_product = [item for item in working_with_db.check_product('all', **self.data) if
                               self.data['url'] in item]
             if not finded_product:
@@ -119,10 +116,8 @@ class ZaraWomanParser:
                     if int(self.data['discount']) <= -15:
                         self.data['last_prices'] = working_with_db.last_n_prices_rows(**self.data)
                         self.data['image_caption'] = self.make_image_caption()
-                        # self.send_to_telegram_as_image_caption()
                         send_to_telegram.main(**self.data)
                         print(self.data['image_caption'])
-                        # print('YES')
 
     def get_percentage(self, price, price_old):
         percent = round(-1 * (100 - (price * 100 / price_old)))
