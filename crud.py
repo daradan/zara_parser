@@ -1,3 +1,5 @@
+from typing import Union
+
 from sqlalchemy.orm import Session
 
 from models import ZaraWomanProducts
@@ -5,11 +7,12 @@ from database import SessionLocal
 
 
 class ProductsCrud:
-    def __init__(self, session: Session):
+    def __init__(self, session: Session, schema):
         self.session = session
+        self.schema = schema
 
-    def get(self, pk: int) -> ZaraWomanProducts:
-        return self.session.get(ZaraWomanProducts, pk)
+    def get(self, pk: int):
+        return self.session.get(self.schema, pk)
 
     def get_by_url(self, url: str) -> ZaraWomanProducts:
         return self.session.query(ZaraWomanProducts).filter_by(url=url).first()

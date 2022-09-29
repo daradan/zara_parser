@@ -3,12 +3,14 @@ import json
 import working_with_db
 import send_to_telegram
 import config
+import categories
 
 
-class ZaraWomanParser:
-    def __init__(self):
-        self.data = config.data
-        self.urls_category_id = config.urls_category_id
+class ZaraParser:
+    def __init__(self, market):
+        self.market = market
+        self.data = config.data  # TODO разделить
+        self.urls_category_id = categories.categories_by_market[self.market]
         self.json_loads = dict()
         self.v2 = ''
 
@@ -51,9 +53,10 @@ class ZaraWomanParser:
                 for color in colors:
                     if not color.get('name') or not color.get('price'):
                         continue
-                    self.get_category(url)
+                    obj = {}
+                    category_id, category = self.get_category(url)
                     # self.data['url'] = self.make_url(com_component['seo'])
-                    self.make_url(com_component['seo'])
+                    self.make_url(com_component['seo'], category_id)
                     if not self.data['url']:
                         continue
                     self.data['name'] = com_component['name']
@@ -61,23 +64,21 @@ class ZaraWomanParser:
                     self.data['description'] = com_component.get('description', '')
                     self.data['price'] = color['price'] // 100
                     self.data['image'] = ', '.join(self.make_photo_urls(color['xmedia']))
-                    print(self.data)
+                    print(obj)
                     self.check_data_from_db()
 
     def get_category(self, url):
         for category_id, category in self.urls_category_id.items():
             if category_id in url:
-                self.v2 = category_id
-                self.data['category'] = category
-                break
+                return category_id, category
 
-    def make_url(self, seo):
+    def make_url(self, seo, v2):
         if seo['keyword'] == '':
             return False
         keyword = f"{seo['keyword']}"
         seo_product_id = f"{seo['seoProductId']}"
         discern_product_id = f"{seo['discernProductId']}"
-        url = f"https://www.zara.com/kz/ru/{keyword}-p{seo_product_id}.html?v1={discern_product_id}&v2={self.v2}"
+        url = f"https://www.zara.com/kz/ru/{keyword}-p{seo_product_id}.html?v1={discern_product_id}&v2={v2}"
         self.data['url_non_utf8'] = url
         self.data['url'] = requests.utils.unquote(url)
 
@@ -145,4 +146,4 @@ class ZaraWomanParser:
 
 
 if __name__ == '__main__':
-    ZaraWomanParser().main()
+    ZaraParser(market='zara_w').main()
