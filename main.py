@@ -1,10 +1,13 @@
+import datetime
+
 import requests
 import json
 import working_with_db
 import send_to_telegram
 import config
 import categories
-
+from crud import WomanProductsCrud, WomanPricesCrud
+from database import SessionLocal
 
 class ZaraParser:
     def __init__(self, market):
@@ -13,6 +16,16 @@ class ZaraParser:
         self.urls_category_id = categories.categories_by_market[self.market]
         self.json_loads = dict()
         self.v2 = ''
+        self.db_session = SessionLocal()
+        self.products_crud: WomanProductsCrud = WomanProductsCrud(session=self.db_session)
+        self.prices_crud: WomanPricesCrud = WomanPricesCrud(session=self.db_session)
+        self.assign_crud()
+
+    def assign_crud(self):
+        if self.market == 'zara_w':
+            self.products_crud = WomanProductsCrud(session=self.db_session)
+        elif self.market == 'zara_m':
+            ...  # assign crud for zara_m market
 
     def main(self):
         try:
@@ -53,19 +66,24 @@ class ZaraParser:
                 for color in colors:
                     if not color.get('name') or not color.get('price'):
                         continue
-                    obj = {}
                     category_id, category = self.get_category(url)
-                    # self.data['url'] = self.make_url(com_component['seo'])
-                    self.make_url(com_component['seo'], category_id)
-                    if not self.data['url']:
+                    product_obj = {
+                        'market': self.market,
+                        'created': datetime.datetime.now(),
+                        'url': self.make_url(com_component['seo'], category_id),
+                        'category': category
+                    }
+                    if not product_obj['url']:
                         continue
-                    self.data['name'] = com_component['name']
-                    self.data['color'] = color['name']
-                    self.data['description'] = com_component.get('description', '')
-                    self.data['price'] = color['price'] // 100
-                    self.data['image'] = ', '.join(self.make_photo_urls(color['xmedia']))
-                    print(obj)
-                    self.check_data_from_db()
+                    product_obj['name'] = com_component['name']
+                    product_obj['color'] = color['name']
+                    product_obj['description'] = com_component.get('description', '')
+                    product_obj['image'] = ', '.join(self.make_photo_urls(color['xmedia']))
+                    price_obj = {
+                        'price': color['price'] // 100,
+                        'created': datetime.datetime.now(),
+                    }
+                    self.check_data_from_db(product_obj, price_obj)
 
     def get_category(self, url):
         for category_id, category in self.urls_category_id.items():
@@ -81,6 +99,7 @@ class ZaraParser:
         url = f"https://www.zara.com/kz/ru/{keyword}-p{seo_product_id}.html?v1={discern_product_id}&v2={v2}"
         self.data['url_non_utf8'] = url
         self.data['url'] = requests.utils.unquote(url)
+        return url
 
     def make_photo_urls(self, photos):
         photos_list = []
@@ -92,33 +111,26 @@ class ZaraParser:
             photos_list.append(photo_str)
         return photos_list
 
-    def check_data_from_db(self):
-        if working_with_db.check_product('one', **self.data) is None:
-            working_with_db.insert_data_to_products(**self.data)
-            last_inserted_row = working_with_db.last_row(**self.data)
-            self.data['product_id'] = last_inserted_row[0]
-            working_with_db.insert_data_to_db_prices(**self.data)
-        else:
-            finded_product = [item for item in working_with_db.check_product('all', **self.data) if
-                              self.data['url'] in item]
-            if not finded_product:
-                working_with_db.insert_data_to_products(**self.data)
-                last_inserted_row = working_with_db.last_row(**self.data)
-                self.data['product_id'] = last_inserted_row[0]
-                working_with_db.insert_data_to_db_prices(**self.data)
-            else:
-                finded_product_price = list(working_with_db.find_product_price(finded_product[0][0], **self.data))
-                self.data['product_id'] = finded_product[0][0]
-                finded_price = finded_product_price[3]
-                if finded_price != self.data['price']:
-                    self.data['discount'] = self.get_percentage(self.data['price'], finded_price)
-                    working_with_db.insert_data_to_db_prices(**self.data)
-                    # if int(self.data['discount']) <= -15 and self.data['price'] >= 3000:
-                    if int(self.data['discount']) <= -15:
-                        self.data['last_prices'] = working_with_db.last_n_prices_rows(**self.data)
-                        self.data['image_caption'] = self.make_image_caption()
-                        send_to_telegram.main(**self.data)
-                        print(self.data['image_caption'])
+    def check_data_from_db(self, product_obj, price_obj):
+        product = self.products_crud.get_or_create(product_obj)
+        price_obj['product_id'] = product.product_id
+        last_price = self.prices_crud.get_last_price(product.product_id)
+        if last_price:
+            discount = self.get_percentage(price_obj['price'], last_price.price)
+            price_obj['discount'] = discount
+            ...  # send to telegram
+        if price_obj.get('discount') != '0':
+            self.prices_crud.insert(price_obj)
+
+
+        # self.data['discount'] = self.get_percentage(self.data['price'], finded_price)
+        #             working_with_db.insert_data_to_db_prices(**self.data)
+        #             # if int(self.data['discount']) <= -15 and self.data['price'] >= 3000:
+        #             if int(self.data['discount']) <= -15:
+        #                 self.data['last_prices'] = working_with_db.last_n_prices_rows(**self.data)
+        #                 self.data['image_caption'] = self.make_image_caption()
+        #                 send_to_telegram.main(**self.data)
+        #                 print(self.data['image_caption'])
 
     def get_percentage(self, price, price_old):
         percent = round(-1 * (100 - (price * 100 / price_old)))
