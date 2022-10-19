@@ -2,32 +2,23 @@ import datetime
 
 import requests
 import json
-import working_with_db
-import send_to_telegram
 import config
 import categories
-from crud import WomanProductsCrud, WomanPricesCrud
+from crud import WomanProductsCrud, WomanPricesCrud, ManProductsCrud, ManPricesCrud
 from database import SessionLocal
 
+
 class ZaraParser:
-    def __init__(self, market):
-        self.market = market
+    def __init__(self):
         self.data = config.data  # TODO разделить
-        self.urls_category_id = categories.categories_by_market[self.market]
         self.json_loads = dict()
-        self.v2 = ''
         self.db_session = SessionLocal()
-        self.products_crud: WomanProductsCrud = WomanProductsCrud(session=self.db_session)
-        self.prices_crud: WomanPricesCrud = WomanPricesCrud(session=self.db_session)
-        self.assign_crud()
+        self.urls_category_id = None
+        self.market = None
+        self.products_crud = None
+        self.prices_crud = None
 
-    def assign_crud(self):
-        if self.market == 'zara_w':
-            self.products_crud = WomanProductsCrud(session=self.db_session)
-        elif self.market == 'zara_m':
-            ...  # assign crud for zara_m market
-
-    def main(self):
+    def start(self):
         try:
             for url in self.make_urls():
                 self.get_data_from_json_loads(url)
@@ -37,7 +28,7 @@ class ZaraParser:
                 tg_send_method='sendMessage',
                 msg_text=f'ERROR: ZARA_W - {e}'
             )
-            send_to_telegram.main(**self.data)
+            # send_to_telegram.main(**self.data)
             print(e)
 
     def make_urls(self):
@@ -113,24 +104,14 @@ class ZaraParser:
 
     def check_data_from_db(self, product_obj, price_obj):
         product = self.products_crud.get_or_create(product_obj)
-        price_obj['product_id'] = product.product_id
-        last_price = self.prices_crud.get_last_price(product.product_id)
+        price_obj['product_id'] = product.id
+        last_price = self.prices_crud.get_last_price(product.id)
         if last_price:
             discount = self.get_percentage(price_obj['price'], last_price.price)
             price_obj['discount'] = discount
             ...  # send to telegram
         if price_obj.get('discount') != '0':
             self.prices_crud.insert(price_obj)
-
-
-        # self.data['discount'] = self.get_percentage(self.data['price'], finded_price)
-        #             working_with_db.insert_data_to_db_prices(**self.data)
-        #             # if int(self.data['discount']) <= -15 and self.data['price'] >= 3000:
-        #             if int(self.data['discount']) <= -15:
-        #                 self.data['last_prices'] = working_with_db.last_n_prices_rows(**self.data)
-        #                 self.data['image_caption'] = self.make_image_caption()
-        #                 send_to_telegram.main(**self.data)
-        #                 print(self.data['image_caption'])
 
     def get_percentage(self, price, price_old):
         percent = round(-1 * (100 - (price * 100 / price_old)))
@@ -157,5 +138,24 @@ class ZaraParser:
         self.data['category'] = ' '.join(temp_list)
 
 
+class ZaraWomenParser(ZaraParser):
+    def __init__(self):
+        super().__init__()
+        self.market = 'zara_w'
+        self.urls_category_id = categories.categories_by_market[self.market]
+        self.products_crud: WomanProductsCrud = WomanProductsCrud(session=self.db_session)
+        self.prices_crud: WomanPricesCrud = WomanPricesCrud(session=self.db_session)
+
+
+class ZaraMenParser(ZaraParser):
+    def __init__(self):
+        super().__init__()
+        self.market = 'zara_m'
+        self.urls_category_id = categories.categories_by_market[self.market]
+        self.products_crud: ManProductsCrud = ManProductsCrud(session=self.db_session)
+        self.prices_crud: ManPricesCrud = ManPricesCrud(session=self.db_session)
+
+
 if __name__ == '__main__':
-    ZaraParser(market='zara_w').main()
+    ZaraWomenParser().start()
+    ZaraMenParser().start()
