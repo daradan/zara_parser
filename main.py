@@ -133,6 +133,7 @@ class ZaraMenParser(ZaraParser):
 
 
 if __name__ == '__main__':
+    print("HELLO")
     logging.basicConfig(
         handlers=[logging.FileHandler('zara_parser.log', 'a+', 'utf-8')],
         format="%(asctime)s %(levelname)s:%(message)s",
