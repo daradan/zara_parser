@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, MetaData
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime, func
 from sqlalchemy.orm import relationship
 
 from database import Base, engine
@@ -7,7 +7,7 @@ from database import Base, engine
 class ZaraWomanProducts(Base):
     __tablename__ = "zara_w_products"
     id = Column(Integer, primary_key=True, index=True)
-    created = Column(String, nullable=False)
+    created = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     market = Column(String, nullable=False)
     url = Column(String, nullable=False)
     name = Column(String, nullable=False)
@@ -23,7 +23,7 @@ class ZaraWomanProducts(Base):
 class ZaraWomanPrices(Base):
     __tablename__ = "zara_w_prices"
     id = Column(Integer, primary_key=True, index=True)
-    created = Column(String, nullable=False)
+    created = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     price = Column(Integer, nullable=False)
     discount = Column(String)
     product_id = Column(Integer, ForeignKey(ZaraWomanProducts.id))
@@ -34,7 +34,7 @@ class ZaraWomanPrices(Base):
 class ZaraManProducts(Base):
     __tablename__ = "zara_m_products"
     id = Column(Integer, primary_key=True, index=True)
-    created = Column(String, nullable=False)
+    created = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     market = Column(String, nullable=False)
     url = Column(String, nullable=False)
     name = Column(String, nullable=False)
@@ -50,7 +50,7 @@ class ZaraManProducts(Base):
 class ZaraManPrices(Base):
     __tablename__ = "zara_m_prices"
     id = Column(Integer, primary_key=True, index=True)
-    created = Column(String, nullable=False)
+    created = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     price = Column(Integer, nullable=False)
     discount = Column(String)
     product_id = Column(Integer, ForeignKey(ZaraManProducts.id))

@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from models import ZaraWomanProducts, ZaraWomanPrices, ZaraManProducts, ZaraManPrices
 from database import SessionLocal
+from schemas import ProductSchema, PriceSchema
 
 
 class Crud:
@@ -20,8 +21,8 @@ class Crud:
     def delete(self, pk):
         self.session.query(self.schema).filter_by(id=pk).delete()
 
-    def insert(self, data):
-        obj = self.schema(**data)
+    def insert(self, data: Union[ProductSchema, PriceSchema]):
+        obj = self.schema(**data.dict())
         self.session.add(obj)
         self.session.commit()
         return obj
@@ -34,11 +35,11 @@ class ProductsCrud(Crud):
     def get_by_url(self, url):
         return self.session.query(self.schema).filter_by(url=url).first()
 
-    def get_or_create(self, data):
-        obj = self.get_by_url(data['url'])
+    def get_or_create(self, new_product: ProductSchema):
+        obj = self.get_by_url(new_product.url)
         if obj:
             return obj
-        return self.insert(data)
+        return self.insert(new_product)
 
 
 class PricesCrud(Crud):
