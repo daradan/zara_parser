@@ -1,3 +1,5 @@
+import time
+
 import requests
 import json
 
@@ -46,3 +48,26 @@ def send_as_media_group(data: dict):
     params['media'][0]['caption'] = data['image_caption']
     params['media'] = json.dumps(params['media'])
     r = requests.post(url, data=params)
+
+
+def send(message):
+    from config import data
+    url = f'https://api.telegram.org/bot{data["tg_token"]}/sendMessage'
+    params = {
+        'chat_id': data['tg_channel'],
+        'text': message
+    }
+    r = requests.post(url, data=params)
+    if r.status_code != 200:
+        data = r.json()
+        time_to_sleep = data['parameters']['retry_after']
+        print(f'limit exceeded, time_to_sleep: {time_to_sleep}')
+        time.sleep(time_to_sleep)
+        send(message)
+
+
+def test_telegram():
+    for i in range(100):
+        send(f'test_{i}')
+
+

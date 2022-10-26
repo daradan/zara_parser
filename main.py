@@ -89,7 +89,7 @@ class ZaraParser:
             discount = utils.get_percentage(price_obj.price, last_price.price)
             price_obj.discount = discount
             ...  # send to telegram
-        if price_obj.discount != '0':
+        if not last_price or price_obj.discount != '0':
             self.prices_crud.insert(price_obj)
             logging.info(f"New Price: {price_obj.price} for product: {product.id}")
 
