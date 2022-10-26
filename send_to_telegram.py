@@ -2,11 +2,11 @@ import requests
 import json
 
 
-def main(**kwargs):
-    if kwargs['tg_send_method'] == 'sendPhoto':
-        send_as_photo(**kwargs)
-    elif kwargs['tg_send_method'] == 'sendMediaGroup':
-        send_as_media_group(**kwargs)
+def main(data: dict):
+    if data['tg_send_method'] == 'sendPhoto':
+        send_as_photo(data)
+    elif data['tg_send_method'] == 'sendMediaGroup':
+        send_as_media_group(data)
 
 
 def send_as_message(**kwargs):
@@ -18,31 +18,31 @@ def send_as_message(**kwargs):
     r = requests.post(url, data=params)
 
 
-def send_as_photo(**kwargs):
-    url = f'https://api.telegram.org/bot{kwargs["tg_token"]}/sendPhoto'
+def send_as_photo(data: dict):
+    url = f'https://api.telegram.org/bot{data["tg_token"]}/sendPhoto'
     params = {
-        'chat_id': kwargs['tg_channel'],
-        'caption': kwargs['image_caption'],
+        'chat_id': data['tg_channel'],
+        'caption': data['image_caption'],
         'parse_mode': 'HTML',
-        'photo': kwargs['image'],
+        'photo': data['image'],
     }
     r = requests.post(url, data=params)
 
 
-def send_as_media_group(**kwargs):
-    url = f'https://api.telegram.org/bot{kwargs["tg_token"]}/sendMediaGroup'
+def send_as_media_group(data: dict):
+    url = f'https://api.telegram.org/bot{data["tg_token"]}/sendMediaGroup'
     params = {
-        'chat_id': kwargs['tg_channel'],
+        'chat_id': data['tg_channel'],
         'media': [],
     }
-    temp_images = kwargs['image']
-    if type(kwargs['image']) == str:
-        temp_images = list(kwargs['image'].split(', '))
+    temp_images = data['image']
+    if type(data['image']) == str:
+        temp_images = list(data['image'].split(', '))
         print('temp_images = STRING')
     for path in temp_images:
         params['media'].append({'type': 'photo',
                                 'media': path,
                                 'parse_mode': 'HTML', })
-    params['media'][0]['caption'] = kwargs['image_caption']
+    params['media'][0]['caption'] = data['image_caption']
     params['media'] = json.dumps(params['media'])
     r = requests.post(url, data=params)
