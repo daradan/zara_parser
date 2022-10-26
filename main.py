@@ -4,7 +4,8 @@ import logging
 
 import config
 import categories
-from crud import WomanProductsCrud, WomanPricesCrud, ManProductsCrud, ManPricesCrud
+from crud import WomanProductsCrud, WomanPricesCrud, ManProductsCrud, ManPricesCrud, KidProductsCrud, KidPricesCrud, \
+    BeautyProductsCrud, BeautyPricesCrud, OriginsProductsCrud, OriginsPricesCrud
 from database import SessionLocal
 from schemas import ProductSchema, PriceSchema
 import utils
@@ -75,7 +76,7 @@ class ZaraParser:
 
     def get_category(self, url):
         for category_id, category in self.urls_category_id.items():
-            if category_id in url:
+            if str(category_id) in url:
                 return category_id, category
 
     def check_data_from_db(self, product_obj: ProductSchema, price_obj: PriceSchema):
@@ -114,30 +115,59 @@ class ZaraParser:
         logging.info(f"Total Parsed: {self.market}, {self.items_count}")
 
 
-class ZaraWomenParser(ZaraParser):
+class ZaraWomanParser(ZaraParser):
     def __init__(self):
         super().__init__()
         self.market = 'zara_w'
-        self.urls_category_id = categories.categories_by_market[self.market]
+        self.urls_category_id = categories.categories_by_market(self.market)
         self.products_crud: WomanProductsCrud = WomanProductsCrud(session=self.db_session)
         self.prices_crud: WomanPricesCrud = WomanPricesCrud(session=self.db_session)
 
 
-class ZaraMenParser(ZaraParser):
+class ZaraManParser(ZaraParser):
     def __init__(self):
         super().__init__()
         self.market = 'zara_m'
-        self.urls_category_id = categories.categories_by_market[self.market]
+        self.urls_category_id = categories.categories_by_market(self.market)
         self.products_crud: ManProductsCrud = ManProductsCrud(session=self.db_session)
         self.prices_crud: ManPricesCrud = ManPricesCrud(session=self.db_session)
 
 
+class ZaraKidParser(ZaraParser):
+    def __init__(self):
+        super().__init__()
+        self.market = 'zara_k'
+        self.urls_category_id = categories.categories_by_market(self.market)
+        self.products_crud: KidProductsCrud = KidProductsCrud(session=self.db_session)
+        self.prices_crud: KidPricesCrud = KidPricesCrud(session=self.db_session)
+
+
+class ZaraBeautyParser(ZaraParser):
+    def __init__(self):
+        super().__init__()
+        self.market = 'zara_b'
+        self.urls_category_id = categories.categories_by_market(self.market)
+        self.products_crud: BeautyProductsCrud = BeautyProductsCrud(session=self.db_session)
+        self.prices_crud: BeautyPricesCrud = BeautyPricesCrud(session=self.db_session)
+
+
+class ZaraOriginsParser(ZaraParser):
+    def __init__(self):
+        super().__init__()
+        self.market = 'zara_o'
+        self.urls_category_id = categories.categories_by_market(self.market)
+        self.products_crud: OriginsProductsCrud = OriginsProductsCrud(session=self.db_session)
+        self.prices_crud: OriginsPricesCrud = OriginsPricesCrud(session=self.db_session)
+
+
 if __name__ == '__main__':
-    print("HELLO")
     logging.basicConfig(
         handlers=[logging.FileHandler('zara_parser.log', 'a+', 'utf-8')],
         format="%(asctime)s %(levelname)s:%(message)s",
         level=logging.INFO,
     )
-    ZaraWomenParser().start()
-    ZaraMenParser().start()
+    ZaraWomanParser().start()
+    ZaraManParser().start()
+    ZaraKidParser().start()
+    ZaraBeautyParser().start()
+    ZaraOriginsParser().start()

@@ -6,6 +6,12 @@ load_dotenv(find_dotenv())
 
 # убрать телеграм креденшлс
 # market можно передавать как аргумент
+
+url = 'https://www.zara.com/kz/ru/'
+url_category = f'{url}categories?ajax=true'
+url_product = f'{url}category/'
+url_photo = 'https://static.zara.net/photos/'
+
 data = {
     'tg_token': os.getenv('TG_TOKEN'),
     'tg_channel': os.getenv('TG_CHANNEL'),
