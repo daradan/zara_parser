@@ -15,9 +15,8 @@ def send_as_message(message):
     if r.status_code != 200:
         data = r.json()
         time_to_sleep = data['parameters']['retry_after']
-        # print(f'limit exceeded, time_to_sleep: {time_to_sleep}')
         time.sleep(time_to_sleep)
-        send_as_media_group(message)
+        send_as_message(message)
 
 
 def send_as_media_group(image_caption, images):
@@ -38,6 +37,5 @@ def send_as_media_group(image_caption, images):
     if r.status_code != 200:
         data = r.json()
         time_to_sleep = data['parameters']['retry_after']
-        # print(f'limit exceeded, time_to_sleep: {time_to_sleep}')
         time.sleep(time_to_sleep)
         send_as_media_group(image_caption, images)

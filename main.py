@@ -97,24 +97,6 @@ class ZaraParser:
             self.prices_crud.insert(price_obj)
             logging.info(f"New Price: {price_obj.price} for product: {product.id}")
 
-    # def make_image_caption(self):
-    #     self.make_hashtag_to_category()
-    #     image_caption = f"<b>{self.data['name']}</b>\n" \
-    #                     f"<b>{self.data['color']}</b>\n" \
-    #                     f"#{self.data['market']} {self.data['category']}\n\n" \
-    #                     f"{self.data['description']}\n\n" \
-    #                     f"{self.data['last_prices']}\n" \
-    #                     f"<a href='{self.data['url_non_utf8']}'>Купить на оф.сайте</a>\n\n" \
-    #                     f"{self.data['tg_channel']}"
-    #     return image_caption
-    #
-    # def make_hashtag_to_category(self):
-    #     temp_list = []
-    #     temp_list2 = self.data['category'].split()
-    #     for k in temp_list2:
-    #         temp_list.append(f'#{k}')
-    #     self.data['category'] = ' '.join(temp_list)
-
     def __del__(self):
         logging.info(f"Total Parsed: {self.market}, {self.items_count}")
 

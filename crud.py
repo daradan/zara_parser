@@ -6,6 +6,7 @@ from models import ZaraWomanProducts, ZaraWomanPrices, ZaraManProducts, ZaraManP
     ZaraBeautyProducts, ZaraBeautyPrices, ZaraOriginsProducts, ZaraOriginsPrices
 from database import SessionLocal
 from schemas import ProductSchema, PriceSchema
+import config
 
 
 class Crud:
