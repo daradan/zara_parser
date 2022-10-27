@@ -41,8 +41,7 @@ def make_image_caption(product_obj, last_n_prices):
 
 
 def fix_category(category):
-    if ' ' in category:
-        category = f"#{' #'.join(category.split())}"
+    category.replace(' ', ' #')
     return f"#{category}"
 
 

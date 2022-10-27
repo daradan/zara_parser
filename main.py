@@ -88,13 +88,13 @@ class ZaraParser:
         if last_price:
             discount = utils.get_percentage(price_obj.price, last_price.price)
             price_obj.discount = discount
+        if not last_price or price_obj.discount != '0':
+            self.prices_crud.insert(price_obj)
+            logging.info(f"New Price: {price_obj.price} for product: {product.id}")
             if int(price_obj.discount) <= -15:
                 image_caption = utils.make_image_caption(product_obj, self.prices_crud.get_last_n_prices(product.id))
                 send_tg = send_to_telegram.send_as_media_group(image_caption, product_obj.image)
                 logging.info(f"Send to telegram status code: {send_tg}")
-        if not last_price or price_obj.discount != '0':
-            self.prices_crud.insert(price_obj)
-            logging.info(f"New Price: {price_obj.price} for product: {product.id}")
 
     def __del__(self):
         logging.info(f"Total Parsed: {self.market}, {self.items_count}")
