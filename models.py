@@ -10,6 +10,7 @@ class ZaraWomanProducts(Base):
     created = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     market = Column(String, nullable=False)
     url = Column(String, nullable=False)
+    store_id = Column(String, nullable=False)
     name = Column(String, nullable=False)
     color = Column(String, nullable=False)
     category = Column(String)
@@ -37,6 +38,7 @@ class ZaraManProducts(Base):
     created = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     market = Column(String, nullable=False)
     url = Column(String, nullable=False)
+    store_id = Column(String, nullable=False)
     name = Column(String, nullable=False)
     color = Column(String, nullable=False)
     category = Column(String)
@@ -64,6 +66,7 @@ class ZaraKidProducts(Base):
     created = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     market = Column(String, nullable=False)
     url = Column(String, nullable=False)
+    store_id = Column(String, nullable=False)
     name = Column(String, nullable=False)
     color = Column(String, nullable=False)
     category = Column(String)
@@ -91,6 +94,7 @@ class ZaraBeautyProducts(Base):
     created = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     market = Column(String, nullable=False)
     url = Column(String, nullable=False)
+    store_id = Column(String, nullable=False)
     name = Column(String, nullable=False)
     color = Column(String, nullable=False)
     category = Column(String)
@@ -118,6 +122,7 @@ class ZaraOriginsProducts(Base):
     created = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     market = Column(String, nullable=False)
     url = Column(String, nullable=False)
+    store_id = Column(String, nullable=False)
     name = Column(String, nullable=False)
     color = Column(String, nullable=False)
     category = Column(String)
@@ -140,5 +145,3 @@ class ZaraOriginsPrices(Base):
 
 
 Base.metadata.create_all(engine)
-
-

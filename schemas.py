@@ -5,6 +5,7 @@ from typing import Optional, List
 class ProductSchema(BaseModel):
     market: str
     url: str
+    store_id: int
     category: str
     name: str
     color: str

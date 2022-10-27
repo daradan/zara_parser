@@ -28,7 +28,7 @@ class ZaraParser:
                 self.get_data_from_json_loads(url)
             except Exception as e:
                 logging.exception(e)
-                send_to_telegram.send_as_message(e)
+                send_to_telegram.send_error(e)
 
     def make_urls(self):
         urls = []
@@ -64,6 +64,7 @@ class ZaraParser:
                     product_obj = {
                         'market': self.market,
                         'url': product_url,
+                        'store_id': color['productId'],
                         'category': category,
                         'name': com_component['name'],
                         'color': color['name'],

@@ -34,11 +34,15 @@ class ProductsCrud(Crud):
     def __init__(self, session: Session, schema):
         super().__init__(session, schema)
 
-    def get_by_url(self, url):
-        return self.session.query(self.schema).filter_by(url=url).first()
+    # def get_by_url(self, url):
+    #     return self.session.query(self.schema).filter_by(url=url).first()
+
+    def get_by_store_id(self, store_id):
+        return self.session.query(self.schema).filter_by(store_id=store_id).first()
 
     def get_or_create(self, new_product: ProductSchema):
-        obj = self.get_by_url(new_product.url)
+        # obj = self.get_by_url(new_product.url)
+        obj = self.get_by_store_id(new_product.store_id)
         if obj:
             return obj
         return self.insert(new_product)
