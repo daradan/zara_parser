@@ -1,3 +1,6 @@
+import config
+
+
 def make_url(seo, category_id):
     if seo['keyword'] == '':
         return
@@ -24,3 +27,20 @@ def get_percentage(price, price_old):
     if percent > 0:
         percent = f'+{percent}'
     return str(percent)
+
+
+def make_image_caption(product_obj, last_n_prices):
+    image_caption = f"<b>{product_obj.name}</b>\n" \
+                    f"<b>{product_obj.color}</b>\n" \
+                    f"#{product_obj.market} {fix_category(product_obj.category)}\n\n" \
+                    f"{product_obj.description}\n\n" \
+                    f"{last_n_prices}\n" \
+                    f"<a href='{product_obj.URL}'>Купить на оф.сайте</a>\n\n" \
+                    f"{config.TG_CHANNEL}"
+    return image_caption
+
+
+def fix_category(category):
+    if ' ' in category:
+        category = f"#{' #'.join(category.split())}"
+    return category

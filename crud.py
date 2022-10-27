@@ -54,6 +54,10 @@ class PricesCrud(Crud):
         return self.session.query(self.schema).filter_by(product_id=product_id)\
             .order_by(self.schema.created.desc()).first()
 
+    def get_last_n_prices(self, product_id: int):
+        return self.session.query(self.schema).filter_by(product_id=product_id).order_by(self.schema.created.desc()).\
+            limit(config.LAST_N_PRICES).all()
+
 
 class WomanProductsCrud(ProductsCrud):
     def __init__(self, session: Session):

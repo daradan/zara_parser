@@ -20,7 +20,7 @@ def categories_by_market(market):
     global categories_ids
     categories_ids = {}
     session = requests.session()
-    response = session.get(config.url_category, headers=config.headers, params=config.params)
+    response = session.get(config.URL_CATEGORY, headers=config.HEADERS, params=config.PARAMS)
     json_loads = json.loads(response.text)
     sections = json_loads['categories']
     for section in sections:  # woman, man, kid, beauty, origins

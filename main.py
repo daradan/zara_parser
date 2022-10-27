@@ -1,19 +1,19 @@
-import requests
 import json
 import logging
+import requests
 
-import config
 import categories
+import config
+import utils
+import send_to_telegram
 from crud import WomanProductsCrud, WomanPricesCrud, ManProductsCrud, ManPricesCrud, KidProductsCrud, KidPricesCrud, \
     BeautyProductsCrud, BeautyPricesCrud, OriginsProductsCrud, OriginsPricesCrud
 from database import SessionLocal
 from schemas import ProductSchema, PriceSchema
-import utils
 
 
 class ZaraParser:
     def __init__(self):
-        self.data = config.data  # TODO разделить
         self.db_session = SessionLocal()
         self.urls_category_id = None
         self.market = None
@@ -28,7 +28,7 @@ class ZaraParser:
                 self.get_data_from_json_loads(url)
             except Exception as e:
                 logging.exception(e)
-                ...  # send error to telegram
+                send_to_telegram.send_as_message(e)
 
     def make_urls(self):
         urls = []
@@ -40,7 +40,7 @@ class ZaraParser:
     def get_data_from_json_loads(self, url):
         logging.info(f"Start URL: {url}")
         session = requests.Session()
-        response = session.get(url, params=config.params, headers=config.headers)
+        response = session.get(url, params=config.PARAMS, headers=config.HEADERS)
         json_loads = json.loads(response.text)
         if len(json_loads['productGroups']) <= 0:
             return
@@ -89,27 +89,31 @@ class ZaraParser:
             discount = utils.get_percentage(price_obj.price, last_price.price)
             price_obj.discount = discount
             ...  # send to telegram
+            if int(price_obj.discount) <= -15:
+                image_caption = utils.make_image_caption(product_obj, self.prices_crud.get_last_n_prices(product.id))
+                send_tg = send_to_telegram.send_as_media_group(image_caption, product_obj.image)
+                logging.info(f"Send to telegram status code: {send_tg}")
         if not last_price or price_obj.discount != '0':
             self.prices_crud.insert(price_obj)
             logging.info(f"New Price: {price_obj.price} for product: {product.id}")
 
-    def make_image_caption(self):
-        self.make_hashtag_to_category()
-        image_caption = f"<b>{self.data['name']}</b>\n" \
-                        f"<b>{self.data['color']}</b>\n" \
-                        f"#{self.data['market']} {self.data['category']}\n\n" \
-                        f"{self.data['description']}\n\n" \
-                        f"{self.data['last_prices']}\n" \
-                        f"<a href='{self.data['url_non_utf8']}'>Купить на оф.сайте</a>\n\n" \
-                        f"{self.data['tg_channel']}"
-        return image_caption
-
-    def make_hashtag_to_category(self):
-        temp_list = []
-        temp_list2 = self.data['category'].split()
-        for k in temp_list2:
-            temp_list.append(f'#{k}')
-        self.data['category'] = ' '.join(temp_list)
+    # def make_image_caption(self):
+    #     self.make_hashtag_to_category()
+    #     image_caption = f"<b>{self.data['name']}</b>\n" \
+    #                     f"<b>{self.data['color']}</b>\n" \
+    #                     f"#{self.data['market']} {self.data['category']}\n\n" \
+    #                     f"{self.data['description']}\n\n" \
+    #                     f"{self.data['last_prices']}\n" \
+    #                     f"<a href='{self.data['url_non_utf8']}'>Купить на оф.сайте</a>\n\n" \
+    #                     f"{self.data['tg_channel']}"
+    #     return image_caption
+    #
+    # def make_hashtag_to_category(self):
+    #     temp_list = []
+    #     temp_list2 = self.data['category'].split()
+    #     for k in temp_list2:
+    #         temp_list.append(f'#{k}')
+    #     self.data['category'] = ' '.join(temp_list)
 
     def __del__(self):
         logging.info(f"Total Parsed: {self.market}, {self.items_count}")
