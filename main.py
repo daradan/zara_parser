@@ -88,7 +88,6 @@ class ZaraParser:
         if last_price:
             discount = utils.get_percentage(price_obj.price, last_price.price)
             price_obj.discount = discount
-            ...  # send to telegram
             if int(price_obj.discount) <= -15:
                 image_caption = utils.make_image_caption(product_obj, self.prices_crud.get_last_n_prices(product.id))
                 send_tg = send_to_telegram.send_as_media_group(image_caption, product_obj.image)

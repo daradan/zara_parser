@@ -34,8 +34,8 @@ def make_image_caption(product_obj, last_n_prices):
                     f"<b>{product_obj.color}</b>\n" \
                     f"#{product_obj.market} {fix_category(product_obj.category)}\n\n" \
                     f"{product_obj.description}\n\n" \
-                    f"{last_n_prices}\n" \
-                    f"<a href='{product_obj.URL}'>Купить на оф.сайте</a>\n\n" \
+                    f"{fix_last_n_prices(last_n_prices)}\n" \
+                    f"<a href='{product_obj.url}'>Купить на оф.сайте</a>\n\n" \
                     f"{config.TG_CHANNEL}"
     return image_caption
 
@@ -43,4 +43,16 @@ def make_image_caption(product_obj, last_n_prices):
 def fix_category(category):
     if ' ' in category:
         category = f"#{' #'.join(category.split())}"
-    return category
+    return f"#{category}"
+
+
+def fix_last_n_prices(last_n_prices):
+    last_n_prices_text = ''
+    for data_price in last_n_prices:
+        if data_price.discount:
+            dscnt = f' ({data_price.discount}%)'
+        else:
+            dscnt = ''
+        last_n_prices_text += f'{data_price.created.year}/{data_price.created.month}/{data_price.created.day}' \
+                              f' - {data_price.price} ₸{dscnt}\n'
+    return last_n_prices_text
