@@ -2,9 +2,11 @@ from typing import Union
 
 from sqlalchemy.orm import Session
 
-from models import ZaraWomanProducts, ZaraWomanPrices, ZaraManProducts, ZaraManPrices
+from models import ZaraWomanProducts, ZaraWomanPrices, ZaraManProducts, ZaraManPrices, ZaraKidProducts, ZaraKidPrices, \
+    ZaraBeautyProducts, ZaraBeautyPrices, ZaraOriginsProducts, ZaraOriginsPrices
 from database import SessionLocal
 from schemas import ProductSchema, PriceSchema
+import config
 
 
 class Crud:
@@ -53,6 +55,10 @@ class PricesCrud(Crud):
         return self.session.query(self.schema).filter_by(product_id=product_id)\
             .order_by(self.schema.created.desc()).first()
 
+    def get_last_n_prices(self, product_id: int):
+        return self.session.query(self.schema).filter_by(product_id=product_id).order_by(self.schema.created.desc()).\
+            limit(config.LAST_N_PRICES).all()
+
 
 class WomanProductsCrud(ProductsCrud):
     def __init__(self, session: Session):
@@ -64,6 +70,21 @@ class ManProductsCrud(ProductsCrud):
         super().__init__(session, ZaraManProducts)
 
 
+class KidProductsCrud(ProductsCrud):
+    def __init__(self, session: Session):
+        super().__init__(session, ZaraKidProducts)
+
+
+class BeautyProductsCrud(ProductsCrud):
+    def __init__(self, session: Session):
+        super().__init__(session, ZaraBeautyProducts)
+
+
+class OriginsProductsCrud(ProductsCrud):
+    def __init__(self, session: Session):
+        super().__init__(session, ZaraOriginsProducts)
+
+
 class WomanPricesCrud(PricesCrud):
     def __init__(self, session: Session):
         super().__init__(session, ZaraWomanPrices)
@@ -72,6 +93,21 @@ class WomanPricesCrud(PricesCrud):
 class ManPricesCrud(PricesCrud):
     def __init__(self, session: Session):
         super().__init__(session, ZaraManPrices)
+
+
+class KidPricesCrud(PricesCrud):
+    def __init__(self, session: Session):
+        super().__init__(session, ZaraKidPrices)
+
+
+class BeautyPricesCrud(PricesCrud):
+    def __init__(self, session: Session):
+        super().__init__(session, ZaraBeautyPrices)
+
+
+class OriginsPricesCrud(PricesCrud):
+    def __init__(self, session: Session):
+        super().__init__(session, ZaraOriginsPrices)
 
 
 def start():

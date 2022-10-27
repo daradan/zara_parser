@@ -4,20 +4,17 @@ from dotenv import find_dotenv, load_dotenv
 
 load_dotenv(find_dotenv())
 
-# убрать телеграм креденшлс
-# market можно передавать как аргумент
-data = {
-    'tg_token': os.getenv('TG_TOKEN'),
-    'tg_channel': os.getenv('TG_CHANNEL'),
-    'tg_send_method': 'sendMediaGroup',
-    'market': 'zara_w',
-    'availability': '',
-    'discount': '',
-    'last_rows': 10,
-}
+URL = 'https://www.zara.com/kz/ru/'
+URL_CATEGORY = f'{URL}categories?ajax=true'
+URL_PRODUCT = f'{URL}category/'
+URL_PHOTO = 'https://static.zara.net/photos/'
 
-params = {'ajax': 'true'}
-headers = {
+LAST_N_PRICES = 10
+TG_TOKEN = os.getenv('TG_TOKEN')
+TG_CHANNEL = os.getenv('TG_CHANNEL')
+
+PARAMS = {'ajax': 'true'}
+HEADERS = {
     'authority': 'www.zara.com',
     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,'
               'application/signed-exchange;v=b3;q=0.9',

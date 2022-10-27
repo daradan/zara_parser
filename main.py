@@ -1,18 +1,19 @@
-import requests
 import json
 import logging
+import requests
 
-import config
 import categories
-from crud import WomanProductsCrud, WomanPricesCrud, ManProductsCrud, ManPricesCrud
+import config
+import utils
+import send_to_telegram
+from crud import WomanProductsCrud, WomanPricesCrud, ManProductsCrud, ManPricesCrud, KidProductsCrud, KidPricesCrud, \
+    BeautyProductsCrud, BeautyPricesCrud, OriginsProductsCrud, OriginsPricesCrud
 from database import SessionLocal
 from schemas import ProductSchema, PriceSchema
-import utils
 
 
 class ZaraParser:
     def __init__(self):
-        self.data = config.data  # TODO разделить
         self.db_session = SessionLocal()
         self.urls_category_id = None
         self.market = None
@@ -27,7 +28,7 @@ class ZaraParser:
                 self.get_data_from_json_loads(url)
             except Exception as e:
                 logging.exception(e)
-                ...  # send error to telegram
+                send_to_telegram.send_as_message(e)
 
     def make_urls(self):
         urls = []
@@ -39,7 +40,7 @@ class ZaraParser:
     def get_data_from_json_loads(self, url):
         logging.info(f"Start URL: {url}")
         session = requests.Session()
-        response = session.get(url, params=config.params, headers=config.headers)
+        response = session.get(url, params=config.PARAMS, headers=config.HEADERS)
         json_loads = json.loads(response.text)
         if len(json_loads['productGroups']) <= 0:
             return
@@ -75,7 +76,7 @@ class ZaraParser:
 
     def get_category(self, url):
         for category_id, category in self.urls_category_id.items():
-            if category_id in url:
+            if str(category_id) in url:
                 return category_id, category
 
     def check_data_from_db(self, product_obj: ProductSchema, price_obj: PriceSchema):
@@ -88,56 +89,71 @@ class ZaraParser:
             discount = utils.get_percentage(price_obj.price, last_price.price)
             price_obj.discount = discount
             ...  # send to telegram
-        if price_obj.discount != '0':
+            if int(price_obj.discount) <= -15:
+                image_caption = utils.make_image_caption(product_obj, self.prices_crud.get_last_n_prices(product.id))
+                send_tg = send_to_telegram.send_as_media_group(image_caption, product_obj.image)
+                logging.info(f"Send to telegram status code: {send_tg}")
+        if not last_price or price_obj.discount != '0':
             self.prices_crud.insert(price_obj)
             logging.info(f"New Price: {price_obj.price} for product: {product.id}")
-
-    def make_image_caption(self):
-        self.make_hashtag_to_category()
-        image_caption = f"<b>{self.data['name']}</b>\n" \
-                        f"<b>{self.data['color']}</b>\n" \
-                        f"#{self.data['market']} {self.data['category']}\n\n" \
-                        f"{self.data['description']}\n\n" \
-                        f"{self.data['last_prices']}\n" \
-                        f"<a href='{self.data['url_non_utf8']}'>Купить на оф.сайте</a>\n\n" \
-                        f"{self.data['tg_channel']}"
-        return image_caption
-
-    def make_hashtag_to_category(self):
-        temp_list = []
-        temp_list2 = self.data['category'].split()
-        for k in temp_list2:
-            temp_list.append(f'#{k}')
-        self.data['category'] = ' '.join(temp_list)
 
     def __del__(self):
         logging.info(f"Total Parsed: {self.market}, {self.items_count}")
 
 
-class ZaraWomenParser(ZaraParser):
+class ZaraWomanParser(ZaraParser):
     def __init__(self):
         super().__init__()
         self.market = 'zara_w'
-        self.urls_category_id = categories.categories_by_market[self.market]
+        self.urls_category_id = categories.categories_by_market(self.market)
         self.products_crud: WomanProductsCrud = WomanProductsCrud(session=self.db_session)
         self.prices_crud: WomanPricesCrud = WomanPricesCrud(session=self.db_session)
 
 
-class ZaraMenParser(ZaraParser):
+class ZaraManParser(ZaraParser):
     def __init__(self):
         super().__init__()
         self.market = 'zara_m'
-        self.urls_category_id = categories.categories_by_market[self.market]
+        self.urls_category_id = categories.categories_by_market(self.market)
         self.products_crud: ManProductsCrud = ManProductsCrud(session=self.db_session)
         self.prices_crud: ManPricesCrud = ManPricesCrud(session=self.db_session)
 
 
+class ZaraKidParser(ZaraParser):
+    def __init__(self):
+        super().__init__()
+        self.market = 'zara_k'
+        self.urls_category_id = categories.categories_by_market(self.market)
+        self.products_crud: KidProductsCrud = KidProductsCrud(session=self.db_session)
+        self.prices_crud: KidPricesCrud = KidPricesCrud(session=self.db_session)
+
+
+class ZaraBeautyParser(ZaraParser):
+    def __init__(self):
+        super().__init__()
+        self.market = 'zara_b'
+        self.urls_category_id = categories.categories_by_market(self.market)
+        self.products_crud: BeautyProductsCrud = BeautyProductsCrud(session=self.db_session)
+        self.prices_crud: BeautyPricesCrud = BeautyPricesCrud(session=self.db_session)
+
+
+class ZaraOriginsParser(ZaraParser):
+    def __init__(self):
+        super().__init__()
+        self.market = 'zara_o'
+        self.urls_category_id = categories.categories_by_market(self.market)
+        self.products_crud: OriginsProductsCrud = OriginsProductsCrud(session=self.db_session)
+        self.prices_crud: OriginsPricesCrud = OriginsPricesCrud(session=self.db_session)
+
+
 if __name__ == '__main__':
-    print("HELLO")
     logging.basicConfig(
         handlers=[logging.FileHandler('zara_parser.log', 'a+', 'utf-8')],
         format="%(asctime)s %(levelname)s:%(message)s",
         level=logging.INFO,
     )
-    ZaraWomenParser().start()
-    ZaraMenParser().start()
+    ZaraWomanParser().start()
+    ZaraManParser().start()
+    ZaraKidParser().start()
+    ZaraBeautyParser().start()
+    ZaraOriginsParser().start()
