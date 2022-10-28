@@ -94,7 +94,7 @@ class ZaraParser:
             logging.info(f"New Price: {price_obj.price} for product: {product.id}")
             if int(price_obj.discount) <= -15:
                 image_caption = utils.make_image_caption(product_obj, self.prices_crud.get_last_n_prices(product.id))
-                send_tg = send_to_telegram.send_as_media_group(image_caption, product_obj.image)
+                send_tg = send_to_telegram.send_as_media_group(image_caption, product_obj)
                 logging.info(f"Send to telegram status code: {send_tg}")
 
     def __del__(self):

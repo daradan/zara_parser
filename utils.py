@@ -32,12 +32,14 @@ def get_percentage(price, price_old):
 def make_image_caption(product_obj, last_n_prices):
     image_caption = f"<b>{product_obj.name}</b>\n" \
                     f"<b>{product_obj.color}</b>\n" \
-                    f"#{product_obj.market} {fix_category(product_obj.category)}\n\n" \
+                    f"{fix_category(product_obj.category)}\n\n" \
                     f"{fix_last_n_prices(last_n_prices)}\n" \
                     f"<a href='{product_obj.url}'>Купить на оф.сайте</a>\n\n" \
-                    f"{config.TG_CHANNEL}"
+                    f"{get_tg_channel(product_obj.market)}"
     if product_obj.description != '':
         image_caption = image_caption.replace('\n\n', f'\n\n{product_obj.description}\n\n', 1)
+    if product_obj.market == 'zara_b':
+        image_caption = image_caption.replace('#', f'#beauty #', 1)
     return image_caption
 
 
@@ -56,3 +58,12 @@ def fix_last_n_prices(last_n_prices):
         last_n_prices_text += f'{data_price.created.year}/{data_price.created.month}/{data_price.created.day}' \
                               f' - {data_price.price} ₸{dscnt}\n'
     return last_n_prices_text
+
+
+def get_tg_channel(market: str) -> str:
+    if market in ['zara_w', 'zara_b', 'zara_o']:
+        return config.TG_CHANNEL_W
+    if market == 'zara_m':
+        return config.TG_CHANNEL_M
+    if market == 'zara_k':
+        return config.TG_CHANNEL_K
