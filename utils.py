@@ -34,7 +34,7 @@ def make_image_caption(product_obj, last_n_prices):
                     f"<b>{product_obj.color}</b>\n" \
                     f"{fix_category(product_obj.category)}\n\n" \
                     f"{fix_last_n_prices(last_n_prices)}\n" \
-                    f"<a href='{product_obj.url}'>Купить на оф.сайте</a>\n\n" \
+                    f"<a href='{product_obj.url}{make_utm_tags(product_obj.market)}'>Купить на оф.сайте</a>\n\n" \
                     f"{get_tg_channel(product_obj.market)}"
     if product_obj.description != '':
         image_caption = image_caption.replace('\n\n', f'\n\n{product_obj.description}\n\n', 1)
@@ -67,3 +67,8 @@ def get_tg_channel(market: str) -> str:
         return config.TG_CHANNEL_M
     if market == 'zara_k':
         return config.TG_CHANNEL_K
+
+
+def make_utm_tags(market) -> str:
+    utm_campaign = get_tg_channel(market)[1:]
+    return f"&utm_source=telegram&utm_medium=messenger&utm_campaign={utm_campaign}&utm_term=zara_skidki_kazakhstan"

@@ -1,5 +1,6 @@
 import json
 import logging
+from logging.handlers import RotatingFileHandler
 import requests
 
 import categories
@@ -148,7 +149,7 @@ class ZaraOriginsParser(ZaraParser):
 
 if __name__ == '__main__':
     logging.basicConfig(
-        handlers=[logging.FileHandler('zara_parser.log', 'a+', 'utf-8')],
+        handlers=[RotatingFileHandler('zara_parser.log', mode='a+', maxBytes=10485760, backupCount=2, encoding='utf-8')],
         format="%(asctime)s %(levelname)s:%(message)s",
         level=logging.INFO,
     )
