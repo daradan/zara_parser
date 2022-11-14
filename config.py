@@ -11,7 +11,10 @@ URL_PHOTO = 'https://static.zara.net/photos/'
 
 LAST_N_PRICES = 10
 TG_TOKEN = os.getenv('TG_TOKEN')
-TG_CHANNEL = os.getenv('TG_CHANNEL')
+TG_CHANNEL_W = os.getenv('TG_CHANNEL_W')
+TG_CHANNEL_M = os.getenv('TG_CHANNEL_M')
+TG_CHANNEL_K = os.getenv('TG_CHANNEL_K')
+TG_CHANNEL_ERROR = os.getenv('TG_CHANNEL_ERROR')
 
 PARAMS = {'ajax': 'true'}
 HEADERS = {

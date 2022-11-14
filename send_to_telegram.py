@@ -3,12 +3,13 @@ import requests
 import json
 
 import config
+import utils
 
 
-def send_as_message(message):
+def send_error(message):
     url = f'https://api.telegram.org/bot{config.TG_TOKEN}/sendMessage'
     params = {
-        'chat_id': config.TG_CHANNEL,
+        'chat_id': config.TG_CHANNEL_ERROR,
         'text': message
     }
     r = requests.post(url, data=params)
@@ -16,18 +17,18 @@ def send_as_message(message):
         data = r.json()
         time_to_sleep = data['parameters']['retry_after']
         time.sleep(time_to_sleep)
-        send_as_message(message)
+        send_error(message)
 
 
-def send_as_media_group(image_caption, images):
+def send_as_media_group(image_caption, product):
     url = f'https://api.telegram.org/bot{config.TG_TOKEN}/sendMediaGroup'
     params = {
-        'chat_id': config.TG_CHANNEL,
+        'chat_id': utils.get_tg_channel(product.market),
         'media': [],
     }
-    if type(images) == str:
-        images = images.split(', ')
-    for path in images:
+    if type(product.image) == str:
+        product.image = product.image.split(', ')
+    for path in product.image:
         params['media'].append({'type': 'photo',
                                 'media': path,
                                 'parse_mode': 'HTML', })
@@ -38,4 +39,4 @@ def send_as_media_group(image_caption, images):
         data = r.json()
         time_to_sleep = data['parameters']['retry_after']
         time.sleep(time_to_sleep)
-        send_as_media_group(image_caption, images)
+        send_as_media_group(image_caption, product)

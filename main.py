@@ -1,5 +1,6 @@
 import json
 import logging
+from logging.handlers import RotatingFileHandler
 import requests
 
 import categories
@@ -28,7 +29,7 @@ class ZaraParser:
                 self.get_data_from_json_loads(url)
             except Exception as e:
                 logging.exception(e)
-                send_to_telegram.send_as_message(e)
+                send_to_telegram.send_error(e)
 
     def make_urls(self):
         urls = []
@@ -64,6 +65,7 @@ class ZaraParser:
                     product_obj = {
                         'market': self.market,
                         'url': product_url,
+                        'store_id': color['productId'],
                         'category': category,
                         'name': com_component['name'],
                         'color': color['name'],
@@ -88,13 +90,13 @@ class ZaraParser:
         if last_price:
             discount = utils.get_percentage(price_obj.price, last_price.price)
             price_obj.discount = discount
-            if int(price_obj.discount) <= -15:
-                image_caption = utils.make_image_caption(product_obj, self.prices_crud.get_last_n_prices(product.id))
-                send_tg = send_to_telegram.send_as_media_group(image_caption, product_obj.image)
-                logging.info(f"Send to telegram status code: {send_tg}")
         if not last_price or price_obj.discount != '0':
             self.prices_crud.insert(price_obj)
             logging.info(f"New Price: {price_obj.price} for product: {product.id}")
+            if int(price_obj.discount) <= -15:
+                image_caption = utils.make_image_caption(product_obj, self.prices_crud.get_last_n_prices(product.id))
+                send_tg = send_to_telegram.send_as_media_group(image_caption, product_obj)
+                logging.info(f"Send to telegram status code: {send_tg}")
 
     def __del__(self):
         logging.info(f"Total Parsed: {self.market}, {self.items_count}")
@@ -147,7 +149,7 @@ class ZaraOriginsParser(ZaraParser):
 
 if __name__ == '__main__':
     logging.basicConfig(
-        handlers=[logging.FileHandler('zara_parser.log', 'a+', 'utf-8')],
+        handlers=[RotatingFileHandler('zara_parser.log', mode='a+', maxBytes=10485760, backupCount=2, encoding='utf-8')],
         format="%(asctime)s %(levelname)s:%(message)s",
         level=logging.INFO,
     )
