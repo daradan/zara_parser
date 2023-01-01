@@ -2,4 +2,4 @@
 /venv
 .idea
 odezhda.db
-*.log
+*.log*
