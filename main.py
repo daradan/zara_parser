@@ -2,6 +2,7 @@ import json
 import logging
 from logging.handlers import RotatingFileHandler
 import requests
+from random import randrange, shuffle
 
 import categories
 import config
@@ -20,47 +21,56 @@ class ZaraParser:
         self.market = None
         self.products_crud = None
         self.prices_crud = None
-        self.items_count = 0
+        self.count = 0
 
     def start(self):
-        logging.info(f"Zara Parser Start: {self.market}")
-        for url in self.make_urls():
+        logging.info(f"START: {self.market}")
+        all_categories = utils.make_urls(self.urls_category_id)
+        shuffle(all_categories)
+        for url in all_categories:
             try:
                 self.get_data_from_json_loads(url)
             except Exception as e:
-                logging.exception(e)
+                logging.info(f"{self.market} - {e}")
                 send_to_telegram.send_error(e)
 
-    def make_urls(self):
-        urls = []
-        for category_id, url_category in self.urls_category_id.items():
-            urls.append(f'https://www.zara.com/kz/ru/category/{category_id}/products')
-        logging.info(f"{len(urls)} urls created")
-        return urls
-
     def get_data_from_json_loads(self, url):
-        logging.info(f"Start URL: {url}")
         session = requests.Session()
         response = session.get(url, params=config.PARAMS, headers=config.HEADERS)
+        if response.status_code != 200:
+            self.count += 1
+            logging.info(f"{self.market}: status {response.status_code}, count {self.count}")
+            self.get_data_from_json_loads(url)
         json_loads = json.loads(response.text)
-        if len(json_loads['productGroups']) <= 0:
+        if not json_loads.get('productGroups'):
+            logging.info(f"{self.market}: 'productGroups' is missing\n{json_loads}")
             return
 
         elements = json_loads['productGroups'][0]['elements']
         for element in elements:
             com_components = element.get('commercialComponents')
             if not com_components:
+                logging.info(f"{self.market}: 'commercialComponents' is missing\n{com_components}")
                 continue
             for com_component in com_components:
-                colors = com_component['detail']['colors']
-                if not com_component.get('name'):
+                if not com_component.get('detail') \
+                        or not com_component['detail'].get('colors') \
+                        or not com_component.get('name') \
+                        or not com_component.get('seo'):
+                    logging.info(f"{self.market}: 'detail' or 'colors' or 'name' or 'seo' are missing\n{com_component}")
                     continue
+                colors = com_component['detail']['colors']
                 for color in colors:
-                    if not color.get('name') or not color.get('price'):
+                    if not color.get('name') \
+                            or not color.get('price') \
+                            or not color.get('xmedia') \
+                            or not color.get('productId'):
+                        logging.info(f"{self.market}: 'name' or 'price' or 'xmedia' or 'productId' are missing\n{color}")
                         continue
-                    category_id, category = self.get_category(url)
+                    category_id, category = utils.get_category(self.urls_category_id, url)
                     product_url = utils.make_url(com_component['seo'], category_id)
                     if not product_url:
+                        logging.info(f"{self.market}: 'product_url' is missing")
                         continue
                     product_obj = {
                         'market': self.market,
@@ -76,14 +86,7 @@ class ZaraParser:
                     price_obj = PriceSchema(price=color['price'] // 100)
                     self.check_data_from_db(product_obj, price_obj)
 
-    def get_category(self, url):
-        for category_id, category in self.urls_category_id.items():
-            if str(category_id) in url:
-                return category_id, category
-
     def check_data_from_db(self, product_obj: ProductSchema, price_obj: PriceSchema):
-        self.items_count += 1
-        logging.info(f"Check From DB: {self.items_count}")
         product = self.products_crud.get_or_create(product_obj)
         price_obj.product_id = product.id
         last_price = self.prices_crud.get_last_price(product.id)
@@ -92,14 +95,14 @@ class ZaraParser:
             price_obj.discount = discount
         if not last_price or price_obj.discount != '0':
             self.prices_crud.insert(price_obj)
-            logging.info(f"New Price: {price_obj.price} for product: {product.id}")
             if int(price_obj.discount) <= -15:
                 image_caption = utils.make_image_caption(product_obj, self.prices_crud.get_last_n_prices(product.id))
                 send_tg = send_to_telegram.send_as_media_group(image_caption, product_obj)
                 logging.info(f"Send to telegram status code: {send_tg}")
 
+
     def __del__(self):
-        logging.info(f"Total Parsed: {self.market}, {self.items_count}")
+        logging.info(f"END: {self.market}")
 
 
 class ZaraWomanParser(ZaraParser):

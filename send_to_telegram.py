@@ -18,6 +18,7 @@ def send_error(message):
         time_to_sleep = data['parameters']['retry_after']
         time.sleep(time_to_sleep)
         send_error(message)
+    return r.status_code
 
 
 def send_as_media_group(image_caption, product):
@@ -28,7 +29,7 @@ def send_as_media_group(image_caption, product):
     }
     if type(product.image) == str:
         product.image = product.image.split(', ')
-    for path in product.image:
+    for path in product.image[:2]:
         params['media'].append({'type': 'photo',
                                 'media': path,
                                 'parse_mode': 'HTML', })
@@ -40,3 +41,4 @@ def send_as_media_group(image_caption, product):
         time_to_sleep = data['parameters']['retry_after']
         time.sleep(time_to_sleep)
         send_as_media_group(image_caption, product)
+    return r.status_code

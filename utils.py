@@ -1,8 +1,21 @@
 import config
 
 
-def make_url(seo, category_id):
-    if seo['keyword'] == '':
+def make_urls(urls_category_id: dict) -> list:
+    urls = []
+    for category_id, url_category in urls_category_id.items():
+        urls.append(f'https://www.zara.com/kz/ru/category/{category_id}/products')
+    return urls
+
+
+def get_category(urls_category_id: dict, url: str) -> tuple:
+    for category_id, category in urls_category_id.items():
+        if str(category_id) in url:
+            return category_id, category
+
+
+def make_url(seo: dict, category_id: str) -> str | None:
+    if not seo.get('keyword'):
         return
     keyword = seo['keyword']
     seo_product_id = seo['seoProductId']
@@ -11,7 +24,7 @@ def make_url(seo, category_id):
     return url
 
 
-def make_photo_urls(photos):
+def make_photo_urls(photos: list) -> str:
     photos_list = []
     for photo in photos:
         path = photo['path']
@@ -22,41 +35,46 @@ def make_photo_urls(photos):
     return ', '.join(photos_list)
 
 
-def get_percentage(price, price_old):
+def get_percentage(price: int, price_old: int) -> str:
     percent = round(-1 * (100 - (price * 100 / price_old)))
     if percent > 0:
         percent = f'+{percent}'
     return str(percent)
 
 
-def make_image_caption(product_obj, last_n_prices):
+def make_image_caption(product_obj, last_n_prices) -> str:
     image_caption = f"<b>{product_obj.name}</b>\n" \
                     f"<b>{product_obj.color}</b>\n" \
                     f"{fix_category(product_obj.category)}\n\n" \
                     f"{fix_last_n_prices(last_n_prices)}\n" \
                     f"<a href='{product_obj.url}{make_utm_tags(product_obj.market)}'>Купить на оф.сайте</a>\n\n" \
                     f"{get_tg_channel(product_obj.market)}"
-    if product_obj.description != '':
+    if product_obj.description:
         image_caption = image_caption.replace('\n\n', f'\n\n{product_obj.description}\n\n', 1)
     if product_obj.market == 'zara_b':
         image_caption = image_caption.replace('#', f'#beauty #', 1)
     return image_caption
 
 
-def fix_category(category):
+def fix_category(category: str) -> str:
     category = category.replace(' ', ' #')
     return f"#{category}"
 
 
-def fix_last_n_prices(last_n_prices):
+def fix_last_n_prices(last_n_prices) -> str:
     last_n_prices_text = ''
     for data_price in last_n_prices:
+        month = data_price.created.month
+        day = data_price.created.day
         if data_price.discount:
             dscnt = f' ({data_price.discount}%)'
         else:
             dscnt = ''
-        last_n_prices_text += f'{data_price.created.year}/{data_price.created.month}/{data_price.created.day}' \
-                              f' - {data_price.price} ₸{dscnt}\n'
+        if month < 10:
+            month = f"0{month}"
+        if day < 10:
+            day = f"0{day}"
+        last_n_prices_text += f'{data_price.created.year}/{month}/{day} - {data_price.price} ₸{dscnt}\n'
     return last_n_prices_text
 
 
